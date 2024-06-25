@@ -21,13 +21,13 @@ function MainNavigator({ navigation }) {
             let iconName;
 
             if (route.name === 'Feed') {
-              iconName = 'home';
+              iconName = 'grid';
+            } else if (route.name === 'Friends') {
+              iconName = 'search';
             } else if (route.name === 'Groups') {
               iconName = 'people';
-            } else if (route.name === 'Friends') {
+            } else if (route.name === 'Profile') {
               iconName = 'person';
-            } else if (route.name === 'Notifications') {
-              iconName = 'notifications';
             }
 
             return <Ionicons name={iconName} size={size} color={color} />;
@@ -37,12 +37,13 @@ function MainNavigator({ navigation }) {
           tabBarStyle: {
             backgroundColor: darkTheme.backgroundColor,
           },
+          tabBarShowLabel: false, // Remove text labels
         })}
       >
         <Tab.Screen name="Feed" options={{ headerShown: false }} component={FeedScreen} />
-        <Tab.Screen name="Groups" options={{ headerShown: false }} component={GroupsScreen} />
         <Tab.Screen name="Friends" options={{ headerShown: false }} component={FriendsScreen} />
-        <Tab.Screen name="Notifications" options={{ headerShown: false }} component={NotificationsScreen} />
+        <Tab.Screen name="Groups" options={{ headerShown: false }} component={GroupsScreen} />
+        <Tab.Screen name="Profile" options={{ headerShown: false }} component={NotificationsScreen} />
       </Tab.Navigator>
       <TouchableOpacity
         style={styles.postButton}

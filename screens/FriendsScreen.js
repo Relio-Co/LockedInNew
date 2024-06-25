@@ -1,77 +1,115 @@
-// FriendsScreen.js
-import React, { useState } from 'react';
-import { View, Text, FlatList, TextInput, Button, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView } from 'react-native';
 import darkTheme from '../themes/DarkTheme';
 
-const sampleFriends = [
-  { id: '1', name: 'Alice' },
-  { id: '2', name: 'Bob' },
-  // Add more sample friends
+const sampleUsers = [
+  { id: '1', name: 'Alice', username: 'alice123', profilePicture: 'https://picsum.photos/200' },
+  { id: '2', name: 'Bob', username: 'bob456', profilePicture: 'https://picsum.photos/200' },
+  // Add more sample users
 ];
 
-const sampleGroups = [
-  { id: '1', name: 'Fitness Enthusiasts' },
-  { id: '2', name: 'Healthy Eating' },
-  // Add more sample groups
+const sampleFriendRequests = [
+  { id: '3', name: 'Charlie', username: 'charlie789', profilePicture: 'https://picsum.photos/200' },
+  { id: '4', name: 'Dana', username: 'dana101', profilePicture: 'https://picsum.photos/200' },
+  // Add more sample friend requests
 ];
 
 export default function FriendsScreen() {
-  const [friends, setFriends] = useState(sampleFriends);
-  const [newFriend, setNewFriend] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState(sampleGroups[0].id);
+  const [friends, setFriends] = useState([]);
+  const [friendRequests, setFriendRequests] = useState(sampleFriendRequests);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
-  const addFriend = () => {
-    if (newFriend) {
-      setFriends([...friends, { id: Date.now().toString(), name: newFriend }]);
-      setNewFriend('');
+  useEffect(() => {
+    // Simulate search results
+    const results = sampleUsers.filter(user => 
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setSearchResults(results);
+  }, [searchQuery]);
+
+  const addFriend = (user) => {
+    if (!friends.some(friend => friend.id === user.id)) {
+      setFriends([...friends, user]);
+      setSearchResults(searchResults.filter(result => result.id !== user.id));
     }
   };
 
-  const inviteToGroup = (friend) => {
-    alert(`Invited ${friend.name} to the group ${sampleGroups.find(group => group.id === selectedGroup).name}`);
+  const acceptFriendRequest = (friend) => {
+    setFriends([...friends, friend]);
+    setFriendRequests(friendRequests.filter(request => request.id !== friend.id));
   };
 
-  return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Add a new friend"
-        placeholderTextColor={darkTheme.placeholderColor}
-        value={newFriend}
-        onChangeText={setNewFriend}
-      />
-      <Button title="Add Friend" onPress={addFriend} color={darkTheme.accentColor} />
-      <View style={styles.pickerContainer}>
-        <Text style={styles.pickerLabel}>Select Group:</Text>
-        <View style={styles.picker}>
-          {sampleGroups.map(group => (
-            <TouchableOpacity
-              key={group.id}
-              style={[styles.pickerItem, selectedGroup === group.id && styles.selectedPickerItem]}
-              onPress={() => setSelectedGroup(group.id)}
-            >
-              <Text style={styles.pickerItemText}>{group.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+  const rejectFriendRequest = (friend) => {
+    setFriendRequests(friendRequests.filter(request => request.id !== friend.id));
+  };
+
+  const renderUserItem = ({ item }) => (
+    <View style={styles.userItem}>
+      <Image source={{ uri: item.profilePicture }} style={styles.profilePicture} />
+      <View style={styles.userInfo}>
+        <Text style={styles.username}>{item.username}</Text>
+        <Text style={styles.name}>{item.name}</Text>
       </View>
-      <FlatList
-        data={friends}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.friendItem}>
-            <Text style={styles.friendName}>{item.name}</Text>
-            <TouchableOpacity style={styles.inviteButton} onPress={() => inviteToGroup(item)}>
-              <Text style={styles.inviteButtonText}>Invite to Group</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      />
+      <TouchableOpacity style={styles.addButton} onPress={() => addFriend(item)}>
+        <Text style={styles.addButtonText}>Add</Text>
+      </TouchableOpacity>
     </View>
   );
-}
 
-const { width } = Dimensions.get('window');
+  const renderFriendRequestItem = ({ item }) => (
+    <View style={styles.userItem}>
+      <Image source={{ uri: item.profilePicture }} style={styles.profilePicture} />
+      <View style={styles.userInfo}>
+        <Text style={styles.username}>{item.username}</Text>
+        <Text style={styles.name}>{item.name}</Text>
+      </View>
+      <View style={styles.buttonGroup}>
+        <TouchableOpacity style={styles.acceptButton} onPress={() => acceptFriendRequest(item)}>
+          <Text style={styles.buttonText}>Accept</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rejectButton} onPress={() => rejectFriendRequest(item)}>
+          <Text style={styles.buttonText}>Reject</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  return (
+    <ScrollView style={styles.container}>
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search for friends"
+        placeholderTextColor={darkTheme.placeholderColor}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      
+      {friendRequests.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Friend Requests</Text>
+          <FlatList
+            data={friendRequests}
+            keyExtractor={(item) => item.id}
+            renderItem={renderFriendRequestItem}
+            scrollEnabled={false}
+          />
+        </View>
+      )}
+      
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Search Results</Text>
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item.id}
+          renderItem={renderUserItem}
+          scrollEnabled={false}
+        />
+      </View>
+    </ScrollView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -80,56 +118,77 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 50,
   },
-  input: {
+  searchBar: {
     backgroundColor: darkTheme.cardColor,
     color: darkTheme.textColor,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 16,
-  },
-  pickerContainer: {
-    marginBottom: 16,
-  },
-  pickerLabel: {
-    color: darkTheme.textColor,
-    marginBottom: 8,
-  },
-  picker: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  pickerItem: {
-    backgroundColor: darkTheme.cardColor,
-    padding: 8,
-    borderRadius: 8,
-    margin: 4,
-  },
-  selectedPickerItem: {
-    backgroundColor: darkTheme.accentColor,
-  },
-  pickerItemText: {
-    color: darkTheme.textColor,
-  },
-  friendItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderRadius: 30,
     padding: 16,
-    backgroundColor: darkTheme.cardColor,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  friendName: {
-    color: darkTheme.textColor,
+    marginBottom: 16,
     fontSize: 16,
   },
-  inviteButton: {
+  section: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    color: darkTheme.textColor,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  userItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: darkTheme.cardColor,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  username: {
+    color: darkTheme.textColor,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  name: {
+    color: darkTheme.placeholderColor,
+    fontSize: 14,
+  },
+  addButton: {
     backgroundColor: darkTheme.accentColor,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 4,
   },
-  inviteButtonText: {
-    color: darkTheme.textColor,
+  addButtonText: {
+    color: darkTheme.buttonTextColor,
+    fontWeight: 'bold',
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+  },
+  acceptButton: {
+    backgroundColor: 'green',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  rejectButton: {
+    backgroundColor: 'red',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+  },
+  buttonText: {
+    color: darkTheme.buttonTextColor,
+    fontWeight: 'bold',
   },
 });

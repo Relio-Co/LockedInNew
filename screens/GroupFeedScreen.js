@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, Text, Dimensions,  TouchableOpacity } from 'react-native';
+import { View, FlatList, StyleSheet, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import FeedItem from '../components/FeedItem';
 import darkTheme from '../themes/DarkTheme';
@@ -36,6 +36,9 @@ export function GroupFeedScreen({ route, navigation }) {
         )}
         contentContainerStyle={styles.contentContainer}
       />
+      <TouchableOpacity style={styles.joinGroupButton} onPress={() => handleSubscribe(group.id)}>
+        <Text style={styles.joinGroupButtonText}>Join Group</Text>
+      </TouchableOpacity>
       <View style={styles.dock}>
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Members', { group })}>
           <Ionicons name="people-outline" size={24} color={darkTheme.textColor} />
@@ -57,7 +60,7 @@ export function GroupFeedScreen({ route, navigation }) {
   );
 }
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -100,6 +103,19 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     alignItems: 'center',
+  },
+  joinGroupButton: {
+    position: 'absolute',
+    bottom: 80,
+    left: 30,
+    backgroundColor: darkTheme.accentColor,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  joinGroupButtonText: {
+    color: darkTheme.buttonTextColor,
+    fontSize: 14,
   },
 });
 

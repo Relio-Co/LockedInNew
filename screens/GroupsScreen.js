@@ -6,10 +6,34 @@ import darkTheme from '../themes/DarkTheme';
 const sampleGroups = [
   { id: '1', name: 'Fitness Enthusiasts', subscribed: false, members: 120, avatar: 'https://picsum.photos/50/50' },
   { id: '2', name: 'Healthy Eating', subscribed: true, members: 98, avatar: 'https://picsum.photos/50/50' },
+  { id: '3', name: 'Morning Runners', subscribed: false, members: 75, avatar: 'https://picsum.photos/50/50' },
+  { id: '4', name: 'Yoga Lovers', subscribed: true, members: 42, avatar: 'https://picsum.photos/50/50' },
+  { id: '5', name: 'Mindful Meditation', subscribed: false, members: 81, avatar: 'https://picsum.photos/50/50' },
+  { id: '6', name: 'Daily Gratitude', subscribed: true, members: 65, avatar: 'https://picsum.photos/50/50' },
+  { id: '7', name: 'Book Club', subscribed: false, members: 56, avatar: 'https://picsum.photos/50/50' },
+  { id: '8', name: 'Language Learners', subscribed: true, members: 91, avatar: 'https://picsum.photos/50/50' },
+  { id: '9', name: 'Creative Writing', subscribed: false, members: 38, avatar: 'https://picsum.photos/50/50' },
+  { id: '10', name: 'Guitar Players', subscribed: true, members: 72, avatar: 'https://picsum.photos/50/50' },
+  { id: '11', name: 'Photography Enthusiasts', subscribed: false, members: 49, avatar: 'https://picsum.photos/50/50' },
+  { id: '12', name: 'Cooking Classes', subscribed: true, members: 85, avatar: 'https://picsum.photos/50/50' },
+  { id: '13', name: 'Travel Bloggers', subscribed: false, members: 62, avatar: 'https://picsum.photos/50/50' },
+  { id: '14', name: ' Coding Community', subscribed: true, members: 95, avatar: 'https://picsum.photos/50/50' },
+  { id: '15', name: 'Gardening Gurus', subscribed: false, members: 44, avatar: 'https://picsum.photos/50/50' },
+  { id: '16', name: 'Volunteer Network', subscribed: true, members: 80, avatar: 'https://picsum.photos/50/50' },
+  { id: '17', name: 'Hiking Adventures', subscribed: false, members: 67, avatar: 'https://picsum.photos/50/50' },
+  { id: '18', name: 'Wellness Warriors', subscribed: true, members: 58, avatar: 'https://picsum.photos/50/50' },
+  { id: '19', name: 'Mediterranean Diet', subscribed: false, members: 53, avatar: 'https://picsum.photos/50/50' },
+  { id: '20', name: 'French Language', subscribed: true, members: 93, avatar: 'https://picsum.photos/50/50' },
+  { id: '21', name: 'Journaling Journey', subscribed: false, members: 46, avatar: 'https://picsum.photos/50/50' },
+  { id: '22', name: 'Cycling Club', subscribed: true, members: 89, avatar: 'https://picsum.photos/50/50' },
+  { id: '23', name: 'Vegan Lifestyle', subscribed: false, members: 51, avatar: 'https://picsum.photos/50/50' },
+  { id: '24', name: 'Spanish Language', subscribed: true, members: 96, avatar: 'https://picsum.photos/50/50' },
+  { id: '25', name: 'Swimming Squad', subscribed: false, members: 70, avatar: 'https://picsum.photos/50/50' },
+  { id: '26', name: 'Art Enthusiasts', subscribed: true, members: 83, avatar: 'https://picsum.photos/50/50' },
   // Add more sample groups
 ];
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function GroupsScreen({ navigation }) {
   const [groups, setGroups] = useState(sampleGroups);
@@ -51,10 +75,10 @@ export default function GroupsScreen({ navigation }) {
               </View>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.subscribeButton, item.subscribed && styles.subscribedButton]}
+              style={styles.joinButton}
               onPress={() => handleSubscribe(item.id)}
             >
-              <Text style={styles.subscribeButtonText}>{item.subscribed ? "Unsubscribe" : "Subscribe"}</Text>
+              <Text style={styles.joinButtonText}>{item.subscribed ? "Unsubscribe" : "Join"}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -73,8 +97,8 @@ const styles = StyleSheet.create({
   searchBar: {
     backgroundColor: darkTheme.inputBackgroundColor,
     color: darkTheme.textColor,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 30,
+    padding: 16,
     marginBottom: 20,
     fontSize: 16,
   },
@@ -82,11 +106,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: darkTheme.cardColor,
-    borderRadius: 8,
-    width: '100%',
+    marginBottom: 8,
+    padding: 8,
   },
   group: {
     flexDirection: 'row',
@@ -94,9 +115,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: width * 0.1, // Responsive size
-    height: width * 0.1, // Responsive size
-    borderRadius: (width * 0.1) / 2,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     marginRight: 16,
   },
   groupInfo: {
@@ -104,24 +125,21 @@ const styles = StyleSheet.create({
   },
   groupText: {
     color: darkTheme.textColor,
-    fontSize: width * 0.045, // Responsive font size
+    fontSize: 16,
     fontWeight: 'bold',
   },
   memberCount: {
     color: darkTheme.placeholderColor,
-    fontSize: width * 0.035, // Responsive font size
+    fontSize: 14,
   },
-  subscribeButton: {
+  joinButton: {
     backgroundColor: darkTheme.accentColor,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 20,
   },
-  subscribedButton: {
-    backgroundColor: darkTheme.buttonColor,
-  },
-  subscribeButtonText: {
+  joinButtonText: {
     color: darkTheme.buttonTextColor,
-    fontSize: width * 0.035, // Responsive font size
+    fontSize: 14,
   },
 });
