@@ -8,6 +8,8 @@ node_modules/
 dist/
 web-build/
 
+output.txt
+
 # Native
 *.orig.*
 *.jks

@@ -1,19 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
 import darkTheme from '../themes/DarkTheme';
 
 const deviceWidth = Dimensions.get('window').width;
 
-export default function FeedItem({ content, likes, comments, imageUrl }) {
+export default function FeedItem({ content, likes, comments, imageUrl, onPress, username, groupName }) {
   return (
-    <View style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={onPress}>
       <Image source={{ uri: imageUrl }} style={styles.image} />
+      <Text style={styles.groupName}>{groupName}</Text>
+      <Text style={styles.username}>Posted by {username}</Text>
       <Text style={styles.content}>{content}</Text>
       <View style={styles.footer}>
         <Text style={styles.footerText}>Likes: {likes}</Text>
         <Text style={styles.footerText}>Comments: {comments}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -23,13 +25,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    width: deviceWidth / 2,
+    width: deviceWidth - 32,
     alignSelf: 'center',
   },
   image: {
     width: '100%',
-    height: 150,
+    height: deviceWidth * 0.8,
     borderRadius: 16,
+    marginBottom: 8,
+  },
+  groupName: {
+    color: darkTheme.accentColor,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  username: {
+    color: darkTheme.textColor,
     marginBottom: 8,
   },
   content: {

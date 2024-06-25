@@ -4,6 +4,11 @@ const darkTheme = {
   textColor: '#FFFFFF',
   accentColor: '#BB86FC',
   borderColor: '#373737',
+  placeholderColor: '#888888',
+  inputBackgroundColor: '#333333',
+  buttonColor: '#1E90FF',
+  buttonTextColor: '#FFFFFF',
+  errorColor: '#FF6B6B',
 };
 
 export default darkTheme;

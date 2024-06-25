@@ -2,32 +2,47 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import FeedScreen from '../screens/FeedScreen';
 import GroupsScreen from '../screens/GroupsScreen';
 import FriendsScreen from '../screens/FriendsScreen';
-import PostScreen from '../screens/PostScreen';
-import GroupFeedScreen from '../screens/GroupFeedScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import darkTheme from '../themes/DarkTheme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-function GroupsStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="Groups" component={GroupsScreen} />
-      <Stack.Screen name="GroupFeed" component={GroupFeedScreen} />
-    </Stack.Navigator>
-  );
-}
-
 function MainNavigator({ navigation }) {
   return (
     <View style={{ flex: 1 }}>
-      <Tab.Navigator>
-        <Tab.Screen name="Feed" component={FeedScreen} />
-        <Tab.Screen name="Groups" component={GroupsStack} />
-        <Tab.Screen name="Friends" component={FriendsScreen} />
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ color, size }) => {
+            let iconName;
+
+            if (route.name === 'Feed') {
+              iconName = 'home';
+            } else if (route.name === 'Groups') {
+              iconName = 'people';
+            } else if (route.name === 'Friends') {
+              iconName = 'person';
+            } else if (route.name === 'Notifications') {
+              iconName = 'notifications';
+            }
+
+            return <Ionicons name={iconName} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: darkTheme.accentColor,
+          tabBarInactiveTintColor: 'gray',
+          tabBarStyle: {
+            backgroundColor: darkTheme.backgroundColor,
+          },
+        })}
+      >
+        <Tab.Screen name="Feed" options={{ headerShown: false }} component={FeedScreen} />
+        <Tab.Screen name="Groups" options={{ headerShown: false }} component={GroupsScreen} />
+        <Tab.Screen name="Friends" options={{ headerShown: false }} component={FriendsScreen} />
+        <Tab.Screen name="Notifications" options={{ headerShown: false }} component={NotificationsScreen} />
       </Tab.Navigator>
       <TouchableOpacity
         style={styles.postButton}

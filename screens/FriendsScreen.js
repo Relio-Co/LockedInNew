@@ -8,9 +8,16 @@ const sampleFriends = [
   // Add more sample friends
 ];
 
+const sampleGroups = [
+  { id: '1', name: 'Fitness Enthusiasts' },
+  { id: '2', name: 'Healthy Eating' },
+  // Add more sample groups
+];
+
 export default function FriendsScreen() {
   const [friends, setFriends] = useState(sampleFriends);
   const [newFriend, setNewFriend] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState(sampleGroups[0].id);
 
   const addFriend = () => {
     if (newFriend) {
@@ -20,8 +27,7 @@ export default function FriendsScreen() {
   };
 
   const inviteToGroup = (friend) => {
-    // Implement group invitation functionality here
-    alert(`Invited ${friend.name} to the group`);
+    alert(`Invited ${friend.name} to the group ${sampleGroups.find(group => group.id === selectedGroup).name}`);
   };
 
   return (
@@ -29,11 +35,25 @@ export default function FriendsScreen() {
       <TextInput
         style={styles.input}
         placeholder="Add a new friend"
-        placeholderTextColor={darkTheme.textColor}
+        placeholderTextColor={darkTheme.placeholderColor}
         value={newFriend}
         onChangeText={setNewFriend}
       />
       <Button title="Add Friend" onPress={addFriend} color={darkTheme.accentColor} />
+      <View style={styles.pickerContainer}>
+        <Text style={styles.pickerLabel}>Select Group:</Text>
+        <View style={styles.picker}>
+          {sampleGroups.map(group => (
+            <TouchableOpacity
+              key={group.id}
+              style={[styles.pickerItem, selectedGroup === group.id && styles.selectedPickerItem]}
+              onPress={() => setSelectedGroup(group.id)}
+            >
+              <Text style={styles.pickerItemText}>{group.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
       <FlatList
         data={friends}
         keyExtractor={(item) => item.id}
@@ -55,6 +75,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: darkTheme.backgroundColor,
     padding: 16,
+    paddingTop: 50,
   },
   input: {
     backgroundColor: darkTheme.cardColor,
@@ -62,6 +83,29 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     marginBottom: 16,
+  },
+  pickerContainer: {
+    marginBottom: 16,
+  },
+  pickerLabel: {
+    color: darkTheme.textColor,
+    marginBottom: 8,
+  },
+  picker: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  pickerItem: {
+    backgroundColor: darkTheme.cardColor,
+    padding: 8,
+    borderRadius: 8,
+    margin: 4,
+  },
+  selectedPickerItem: {
+    backgroundColor: darkTheme.accentColor,
+  },
+  pickerItemText: {
+    color: darkTheme.textColor,
   },
   friendItem: {
     flexDirection: 'row',

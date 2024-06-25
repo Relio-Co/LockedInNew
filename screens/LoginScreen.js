@@ -1,6 +1,20 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Text, 
+  Image, 
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform
+} from 'react-native';
 import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import darkTheme from '../themes/DarkTheme';
 
 export default function LoginScreen({ navigation }) {
@@ -8,67 +22,169 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    checkExistingToken();
+  }, []);
+
+  const checkExistingToken = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) {
+        // Validate token here if needed
+        navigation.replace('Main');
+      }
+    } catch (error) {
+      console.error('Error checking existing token:', error);
+    }
+  };
 
   const handleAuth = async () => {
+    setLoading(true);
+    setError('');
     try {
+      let userCredential;
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
       }
-      navigation.navigate('Main');
+      const token = await userCredential.user.getIdToken();
+      await AsyncStorage.setItem('userToken', token);
+      navigation.replace('Main');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor={darkTheme.textColor}
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor={darkTheme.textColor}
-        value={password}
-        secureTextEntry
-        onChangeText={setPassword}
-      />
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Button title={isSignUp ? 'Sign Up' : 'Login'} onPress={handleAuth} color={darkTheme.accentColor} />
-      <Button
-        title={isSignUp ? 'Switch to Login' : 'Switch to Sign Up'}
-        onPress={() => setIsSignUp(!isSignUp)}
-        color={darkTheme.accentColor}
-      />
-    </View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.inner}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.logo}
+            />
+            <Text style={styles.appName}>YourApp</Text>
+          </View>
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={24} color={darkTheme.textColor} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor={darkTheme.placeholderColor}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={24} color={darkTheme.textColor} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={darkTheme.placeholderColor}
+                value={password}
+                secureTextEntry
+                onChangeText={setPassword}
+              />
+            </View>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={loading}>
+              {loading ? (
+                <ActivityIndicator color={darkTheme.buttonTextColor} />
+              ) : (
+                <Text style={styles.buttonText}>{isSignUp ? 'Sign Up' : 'Login'}</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)}>
+              <Text style={styles.switchText}>
+                {isSignUp ? 'Already have an account? Login' : 'Don\'t have an account? Sign Up'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 16,
     backgroundColor: darkTheme.backgroundColor,
   },
-  input: {
-    height: 40,
-    borderColor: darkTheme.borderColor,
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+  inner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+  },
+  appName: {
+    fontSize: 24,
+    fontWeight: 'bold',
     color: darkTheme.textColor,
-    backgroundColor: darkTheme.cardColor,
+    marginTop: 10,
+  },
+  formContainer: {
+    width: '100%',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: darkTheme.inputBackgroundColor,
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingHorizontal: 15,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    color: darkTheme.textColor,
+    fontSize: 16,
   },
   errorText: {
-    color: 'red',
-    marginBottom: 16,
+    color: darkTheme.errorColor,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: darkTheme.buttonColor,
+    borderRadius: 8,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 15,
+  },
+  buttonText: {
+    color: darkTheme.buttonTextColor,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  switchText: {
+    color: darkTheme.textColor,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });

@@ -5,6 +5,8 @@ import LoginScreen from './screens/LoginScreen';
 import MainNavigator from './navigation/MainNavigator';
 import darkTheme from './themes/DarkTheme';
 import PostScreen from './screens/PostScreen';
+import PostDetailScreen from './screens/PostDetailScreen';
+import GroupFeedScreen from './screens/GroupFeedScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +28,8 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Main" component={MainNavigator} options={{ headerShown: false }} />
         <Stack.Screen name="Post" component={PostScreen} options={{ headerShown: false}} />
+        <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="GroupFeed" component={GroupFeedScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
