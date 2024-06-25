@@ -1,5 +1,6 @@
+// FriendsScreen.js
 import React, { useState } from 'react';
-import { View, Text, FlatList, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TextInput, Button, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import darkTheme from '../themes/DarkTheme';
 
 const sampleFriends = [
@@ -69,6 +70,8 @@ export default function FriendsScreen() {
     </View>
   );
 }
+
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {

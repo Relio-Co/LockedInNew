@@ -72,7 +72,7 @@ export default function LoginScreen({ navigation }) {
               source={require('../assets/logo.png')}
               style={styles.logo}
             />
-            <Text style={styles.appName}>YourApp</Text>
+            <Text style={styles.appName}>LockIn</Text>
           </View>
           <View style={styles.formContainer}>
             <View style={styles.inputContainer}>

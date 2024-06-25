@@ -1,6 +1,8 @@
+// PostDetailScreen.js
 import React from 'react';
-import { View, Text, StyleSheet, Image, FlatList, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, FlatList, Dimensions, TouchableOpacity } from 'react-native';
 import darkTheme from '../themes/DarkTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 const deviceWidth = Dimensions.get('window').width;
 
@@ -10,16 +12,22 @@ const sampleComments = [
   // Add more sample comments
 ];
 
-export default function PostDetailScreen({ route }) {
+export default function PostDetailScreen({ route, navigation }) {
   const { post } = route.params;
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={24} color={darkTheme.textColor} />
+      </TouchableOpacity>
       <Image source={{ uri: post.imageUrl }} style={styles.image} />
       <Text style={styles.content}>{post.content}</Text>
       <View style={styles.footer}>
         <Text style={styles.footerText}>Likes: {post.likes}</Text>
         <Text style={styles.footerText}>Comments: {post.comments}</Text>
+        <TouchableOpacity style={styles.reportButton} onPress={() => navigation.navigate('Report', { data: post })}>
+          <Ionicons name="alert-circle-outline" size={24} color={darkTheme.textColor} />
+        </TouchableOpacity>
       </View>
       <FlatList
         data={sampleComments}
@@ -41,8 +49,11 @@ const styles = StyleSheet.create({
     backgroundColor: darkTheme.backgroundColor,
     padding: 16,
   },
+  backButton: {
+    marginBottom: 16,
+  },
   image: {
-    width: deviceWidth - 32, // Account for padding
+    width: deviceWidth - 32,
     height: 200,
     borderRadius: 16,
     marginBottom: 8,
@@ -72,5 +83,8 @@ const styles = StyleSheet.create({
   },
   commentText: {
     color: darkTheme.textColor,
+  },
+  reportButton: {
+    marginLeft: 16,
   },
 });

@@ -2,7 +2,7 @@ const darkTheme = {
   backgroundColor: '#121212',
   cardColor: '#1E1E1E',
   textColor: '#FFFFFF',
-  accentColor: '#BB86FC',
+  accentColor: '#f5822a',
   borderColor: '#373737',
   placeholderColor: '#888888',
   inputBackgroundColor: '#333333',

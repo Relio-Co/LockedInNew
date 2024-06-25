@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Image, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import darkTheme from '../themes/DarkTheme';
 
 const sampleGroups = [
-  { id: '1', name: 'Fitness Enthusiasts', subscribed: false, members: 120 },
-  { id: '2', name: 'Healthy Eating', subscribed: true, members: 98 },
+  { id: '1', name: 'Fitness Enthusiasts', subscribed: false, members: 120, avatar: 'https://picsum.photos/50/50' },
+  { id: '2', name: 'Healthy Eating', subscribed: true, members: 98, avatar: 'https://picsum.photos/50/50' },
   // Add more sample groups
 ];
+
+const { width, height } = Dimensions.get('window');
 
 export default function GroupsScreen({ navigation }) {
   const [groups, setGroups] = useState(sampleGroups);
@@ -41,14 +44,18 @@ export default function GroupsScreen({ navigation }) {
               style={styles.group}
               onPress={() => navigation.navigate('GroupFeed', { group: item })}
             >
-              <Text style={styles.groupText}>{item.name}</Text>
-              <Text style={styles.memberCount}>{item.members} members</Text>
+              <Image source={{ uri: item.avatar }} style={styles.avatar} />
+              <View style={styles.groupInfo}>
+                <Text style={styles.groupText}>{item.name}</Text>
+                <Text style={styles.memberCount}>{item.members} members</Text>
+              </View>
             </TouchableOpacity>
-            <Button
-              title={item.subscribed ? "Unsubscribe" : "Subscribe"}
+            <TouchableOpacity
+              style={[styles.subscribeButton, item.subscribed && styles.subscribedButton]}
               onPress={() => handleSubscribe(item.id)}
-              color={darkTheme.accentColor}
-            />
+            >
+              <Text style={styles.subscribeButtonText}>{item.subscribed ? "Unsubscribe" : "Subscribe"}</Text>
+            </TouchableOpacity>
           </View>
         )}
       />
@@ -67,24 +74,54 @@ const styles = StyleSheet.create({
     backgroundColor: darkTheme.inputBackgroundColor,
     color: darkTheme.textColor,
     borderRadius: 8,
-    padding: 8,
-    marginBottom: 16,
+    padding: 10,
+    marginBottom: 20,
+    fontSize: 16,
   },
   groupContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
-  },
-  group: {
     padding: 16,
     backgroundColor: darkTheme.cardColor,
     borderRadius: 8,
-    marginBottom: 8,
+    width: '100%',
+  },
+  group: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatar: {
+    width: width * 0.1, // Responsive size
+    height: width * 0.1, // Responsive size
+    borderRadius: (width * 0.1) / 2,
+    marginRight: 16,
+  },
+  groupInfo: {
+    flex: 1,
   },
   groupText: {
     color: darkTheme.textColor,
-    fontSize: 16,
+    fontSize: width * 0.045, // Responsive font size
+    fontWeight: 'bold',
   },
   memberCount: {
     color: darkTheme.placeholderColor,
-    fontSize: 12,
+    fontSize: width * 0.035, // Responsive font size
+  },
+  subscribeButton: {
+    backgroundColor: darkTheme.accentColor,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  subscribedButton: {
+    backgroundColor: darkTheme.buttonColor,
+  },
+  subscribeButtonText: {
+    color: darkTheme.buttonTextColor,
+    fontSize: width * 0.035, // Responsive font size
   },
 });

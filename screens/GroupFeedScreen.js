@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, FlatList, StyleSheet, Text, Dimensions,  TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import FeedItem from '../components/FeedItem';
 import darkTheme from '../themes/DarkTheme';
@@ -9,30 +9,16 @@ const samplePosts = [
   { id: '2', content: 'Group Post 2', likes: 25, comments: 7, imageUrl: 'https://picsum.photos/200/300', username: 'User2', groupName: 'Healthy Eating' },
 ];
 
-export  function GroupFeedScreen({ route, navigation }) {
+export function GroupFeedScreen({ route, navigation }) {
   const { group } = route.params;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={darkTheme.textColor} />
+        </TouchableOpacity>
         <Text style={styles.groupTitle}>{group.name}</Text>
-        <View style={styles.buttons}>
-          <TouchableOpacity style={styles.button} onPress={() => {/* navigate to members screen */}}>
-            <Ionicons name="people-outline" size={24} color={darkTheme.textColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => {/* navigate to admin screen */}}>
-            <Ionicons name="settings-outline" size={24} color={darkTheme.textColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => {/* navigate to chat screen */}}>
-            <Ionicons name="chatbubble-outline" size={24} color={darkTheme.textColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Post')}>
-            <Ionicons name="create-outline" size={24} color={darkTheme.textColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => {/* navigate to report screen */}}>
-            <Ionicons name="alert-circle-outline" size={24} color={darkTheme.textColor} />
-          </TouchableOpacity>
-        </View>
       </View>
       <FlatList
         data={samplePosts}
@@ -43,19 +29,41 @@ export  function GroupFeedScreen({ route, navigation }) {
             likes={item.likes}
             comments={item.comments}
             imageUrl={item.imageUrl}
+            onPress={() => navigation.navigate('PostDetail', { post: item })}
             username={item.username}
             groupName={item.groupName}
           />
         )}
+        contentContainerStyle={styles.contentContainer}
       />
+      <View style={styles.dock}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Members', { group })}>
+          <Ionicons name="people-outline" size={24} color={darkTheme.textColor} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => {/* navigate to admin screen */}}>
+          <Ionicons name="settings-outline" size={24} color={darkTheme.textColor} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => {/* navigate to chat screen */}}>
+          <Ionicons name="chatbubble-outline" size={24} color={darkTheme.textColor} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Post')}>
+          <Ionicons name="create-outline" size={24} color={darkTheme.textColor} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Report', { data: group })}>
+          <Ionicons name="alert-circle-outline" size={24} color={darkTheme.textColor} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
+
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: darkTheme.backgroundColor,
+    paddingTop: 50,
   },
   header: {
     backgroundColor: darkTheme.cardColor,
@@ -63,19 +71,35 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: darkTheme.borderColor,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  backButton: {
+    marginRight: 16,
   },
   groupTitle: {
     color: darkTheme.textColor,
     fontSize: 20,
     fontWeight: 'bold',
   },
-  buttons: {
+  contentContainer: {
+    paddingBottom: 80, // Add padding to prevent content being hidden behind the dock
+  },
+  dock: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: darkTheme.cardColor,
+    borderTopWidth: 1,
+    borderTopColor: darkTheme.borderColor,
   },
   button: {
-    marginHorizontal: 5,
+    flex: 1,
+    alignItems: 'center',
   },
 });
 
