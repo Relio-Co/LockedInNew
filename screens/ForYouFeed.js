@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, FlatList, StyleSheet, Text, Image, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, FlatList, StyleSheet, Text, Image, TouchableOpacity, Dimensions, ToastAndroid, Modal, Button } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import darkTheme from '../themes/DarkTheme';
 
@@ -30,34 +30,31 @@ const sampleGroups = [
   },
 ];
 
-const ForYouFeed = () => {
+const ForYouFeed = ({ navigation }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+
+  const handleMemberPress = (member) => {
+    setSelectedMember(member);
+    setModalVisible(true);
+  };
+
+  const handleProfilePicturePress = () => {
+    setModalVisible(false);
+    navigation.navigate('PersonAccount', { member: selectedMember });
+  };
+
   const renderMemberItem = ({ item }) => (
-    <View style={styles.memberContainer}>
-      <Image 
-        source={{ uri: item.imageUrl }} 
-        style={item.hasPosted ? styles.memberPostImage : styles.memberImage} 
+    <TouchableOpacity style={styles.memberContainer} onPress={() => handleMemberPress(item)}>
+      <Image
+        source={{ uri: item.imageUrl }}
+        style={item.hasPosted ? styles.memberPostImage : styles.memberImage}
         accessibilityLabel={`Profile picture of ${item.name}`}
       />
-      <View style={styles.iconContainer}>
-        <TouchableOpacity 
-          style={styles.iconButton}
-          accessibilityLabel={`Nudge ${item.name}`}
-          accessibilityRole="button"
-        >
-          <Ionicons name="hand-left-outline" size={20} color={darkTheme.textColor} />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.iconButton}
-          accessibilityLabel={`Blame ${item.name}`}
-          accessibilityRole="button"
-        >
-          <Ionicons name="close-circle-outline" size={20} color="red" />
-        </TouchableOpacity>
-      </View>
       <View style={styles.scoreBadge}>
         <Text style={styles.scoreText}>{item.score}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderGroupItem = ({ item }) => (
@@ -84,14 +81,34 @@ const ForYouFeed = () => {
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <FlatList
         data={sampleGroups}
         keyExtractor={(group) => group.id}
         renderItem={renderGroupItem}
         contentContainerStyle={styles.groupList}
       />
-    </ScrollView>
+      {selectedMember && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity onPress={handleProfilePicturePress}>
+                <Image source={{ uri: selectedMember.imageUrl }} style={styles.modalImage} />
+              </TouchableOpacity>
+              <Text style={styles.modalText}>{selectedMember.name}</Text>
+              <Button title="Nudge (+5pts)" onPress={() => ToastAndroid.show('Nudged!', ToastAndroid.SHORT)} />
+              <Button title="Blame (+3pts)" onPress={() => ToastAndroid.show('Blamed!', ToastAndroid.SHORT)} />
+              <Button title="Close" onPress={() => setModalVisible(false)} />
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
   );
 };
 
@@ -152,8 +169,8 @@ const styles = StyleSheet.create({
   },
   memberContainer: {
     alignItems: 'center',
-    marginRight: 16,
-    width: 100,
+    marginRight: 8,
+    width: (width - 64) / 4, // Adjust width to fit 4 members in a row
   },
   memberImage: {
     width: 60,
@@ -166,18 +183,6 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 12,
     marginBottom: 8,
-  },
-  iconContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
-    marginBottom: 4,
-  },
-  iconButton: {
-    backgroundColor: darkTheme.cardColor,
-    borderRadius: 12,
-    padding: 4,
-    elevation: 2,
   },
   scoreBadge: {
     position: 'absolute',
@@ -200,6 +205,29 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     borderRadius: 15,
     padding: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: darkTheme.backgroundColor,
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: 'center',
+    paddingBottom: 50,
+  },
+  modalImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 16,
+  },
+  modalText: {
+    fontSize: 18,
+    color: darkTheme.textColor,
+    marginBottom: 16,
   },
 });
 

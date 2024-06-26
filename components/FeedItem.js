@@ -21,16 +21,15 @@ export default function FeedItem({ content, likes, comments, imageUrl, onPress, 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: darkTheme.cardColor,
     borderRadius: 16,
-    padding: 16,
+    padding: 8,
     marginBottom: 16,
-    width: deviceWidth - 32,
+    width: (deviceWidth / 2) - 16,
     alignSelf: 'center',
   },
   image: {
     width: '100%',
-    height: deviceWidth * 0.8,
+    height: deviceWidth * 0.5, // Adjusted height for better appearance
     borderRadius: 16,
     marginBottom: 8,
   },
@@ -41,7 +40,7 @@ const styles = StyleSheet.create({
   },
   username: {
     color: darkTheme.textColor,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   content: {
     color: darkTheme.textColor,

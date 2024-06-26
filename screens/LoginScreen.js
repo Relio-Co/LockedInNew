@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Text, 
-  Image, 
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
-  Platform
-} from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Text, Image, ActivityIndicator, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +11,7 @@ export default function LoginScreen({ navigation }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
+  AsyncStorage.clear();
   useEffect(() => {
     checkExistingToken();
   }, []);
@@ -32,11 +20,31 @@ export default function LoginScreen({ navigation }) {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (token) {
-        // Validate token here if needed
-        navigation.replace('Main');
+        validateToken(token);
       }
     } catch (error) {
       console.error('Error checking existing token:', error);
+    }
+  };
+
+  const validateToken = async (token) => {
+    try {
+      const response = await fetch('https://server.golockedin.com/user/validate-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        navigation.replace('Main');
+      } else {
+        await AsyncStorage.removeItem('userToken');
+      }
+    } catch (error) {
+      console.error('Error validating token:', error);
+      await AsyncStorage.removeItem('userToken');
     }
   };
 
@@ -52,7 +60,7 @@ export default function LoginScreen({ navigation }) {
       }
       const token = await userCredential.user.getIdToken();
       await AsyncStorage.setItem('userToken', token);
-      navigation.replace('Main');
+      validateToken(token);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -61,42 +69,21 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.inner}>
           <View style={styles.logoContainer}>
-            <Image
-              source={require('../assets/logo.png')}
-              style={styles.logo}
-            />
+            <Image source={require('../assets/logo.png')} style={styles.logo} />
             <Text style={styles.appName}>LockIn</Text>
           </View>
           <View style={styles.formContainer}>
             <View style={styles.inputContainer}>
               <Ionicons name="mail-outline" size={24} color={darkTheme.textColor} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor={darkTheme.placeholderColor}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <TextInput style={styles.input} placeholder="Email" placeholderTextColor={darkTheme.placeholderColor} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
             </View>
             <View style={styles.inputContainer}>
               <Ionicons name="lock-closed-outline" size={24} color={darkTheme.textColor} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor={darkTheme.placeholderColor}
-                value={password}
-                secureTextEntry
-                onChangeText={setPassword}
-              />
+              <TextInput style={styles.input} placeholder="Password" placeholderTextColor={darkTheme.placeholderColor} value={password} secureTextEntry onChangeText={setPassword} />
             </View>
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
             <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={loading}>

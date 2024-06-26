@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: darkTheme.backgroundColor,
     padding: 16,
+    paddingTop: 50,
   },
   backButton: {
     marginBottom: 16,
