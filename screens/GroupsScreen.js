@@ -10,13 +10,14 @@ const { width } = Dimensions.get('window');
 export default function GroupsScreen({ navigation }) {
   const [groups, setGroups] = useState([]);
   const [search, setSearch] = useState('');
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
         if (token) {
-          const response = await axios.get('https://server.golockedin.com/groups', {
+          const response = await axios.get(`${apiUrl}/groups`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const sortedGroups = response.data.sort((a, b) => b.subscribed - a.subscribed);
@@ -36,7 +37,7 @@ export default function GroupsScreen({ navigation }) {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
       if (token) {
-        const response = await axios.post(`https://server.golockedin.com/groups/join/${groupId}`, {}, {
+        const response = await axios.post(`${apiUrl}/groups/join/${groupId}`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const updatedGroups = groups.map(group =>

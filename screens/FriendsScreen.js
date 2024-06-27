@@ -4,9 +4,12 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import darkTheme from '../themes/DarkTheme';
 
+// Get the API URL from environment variables
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
 // Create an axios instance
 const api = axios.create({
-  baseURL: 'https://server.golockedin.com',
+  baseURL: apiUrl,
 });
 
 // Add a request interceptor to include the JWT token
@@ -64,7 +67,7 @@ export default function FriendsScreen() {
 
   const sendFriendRequest = async (receiverUuid) => {
     try {
-      const response = await fetch('https://server.golockedin.com/friends/request', {
+      const response = await fetch(`${apiUrl}/friends/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,9 +84,6 @@ export default function FriendsScreen() {
       console.error('Error sending friend request:', error);
     }
   };
-  
-  
-  
 
   const acceptFriendRequest = async (requestId) => {
     try {
@@ -117,7 +117,6 @@ export default function FriendsScreen() {
       </TouchableOpacity>
     </View>
   );
-  
 
   const renderFriendRequestItem = ({ item }) => (
     <View style={styles.userItem}>

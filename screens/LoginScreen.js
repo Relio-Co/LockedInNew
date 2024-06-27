@@ -12,6 +12,7 @@ export function LoginScreen({ navigation }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
     checkExistingToken();
@@ -31,7 +32,7 @@ export function LoginScreen({ navigation }) {
 
   const validateToken = async (token) => {
     try {
-      const response = await fetch(`https://server.golockedin.com/user/validate-token`, {
+      const response = await fetch(`${apiUrl}/user/validate-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export function LoginScreen({ navigation }) {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const token = await userCredential.user.getIdToken();
         await AsyncStorage.setItem('jwt_token', token);
-        const response = await fetch(`https://server.golockedin.com/user/create`, {
+        const response = await fetch(`${apiUrl}/user/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

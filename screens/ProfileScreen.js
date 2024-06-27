@@ -17,12 +17,13 @@ const ProfileScreen = ({ navigation }) => {
   const [privateAccount, setPrivateAccount] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
-        const response = await axios.get('https://server.golockedin.com/user', {
+        const response = await axios.get(`${apiUrl}/user`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const user = response.data[0];
@@ -40,7 +41,7 @@ const ProfileScreen = ({ navigation }) => {
     const fetchUserPosts = async () => {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
-        const response = await axios.get('https://server.golockedin.com/user/posts', {
+        const response = await axios.get(`${apiUrl}/user/posts`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPosts(response.data);
@@ -52,7 +53,7 @@ const ProfileScreen = ({ navigation }) => {
     const fetchNotifications = async () => {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
-        const response = await axios.get('https://server.golockedin.com/user/notifications', {
+        const response = await axios.get(`${apiUrl}/user/notifications`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setNotifications(response.data);
@@ -64,13 +65,13 @@ const ProfileScreen = ({ navigation }) => {
     fetchUserData();
     fetchUserPosts();
     fetchNotifications();
-  }, []);
+  }, [apiUrl]);
 
   const saveUserSettings = async () => {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
       await axios.put(
-        'https://server.golockedin.com/user/settings',
+        `${apiUrl}/user/settings`,
         {
           username,
           name,
@@ -109,7 +110,7 @@ const ProfileScreen = ({ navigation }) => {
   const deleteAccount = async () => {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
-      await axios.delete('https://server.golockedin.com/user/delete', {
+      await axios.delete(`${apiUrl}/user/delete`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await AsyncStorage.removeItem('jwt_token');

@@ -10,6 +10,7 @@ export default function FeedScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Explore');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
     fetchPosts();
@@ -23,7 +24,7 @@ export default function FeedScreen({ navigation }) {
         console.error('JWT token not found');
         return;
       }
-      const response = await axios.get('https://server.golockedin.com/posts', {
+      const response = await axios.get(`${apiUrl}/posts`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

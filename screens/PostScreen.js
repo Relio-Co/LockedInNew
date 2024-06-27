@@ -1,6 +1,5 @@
-// In PostScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, TouchableOpacity, Image, TextInput, Picker, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
+import { View, Text, StyleSheet, Button, TouchableOpacity, Image, TextInput, Picker, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform, Switch } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,6 +12,7 @@ export default function PostScreen({ navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [groups, setGroups] = useState([]);
   const [isPublic, setIsPublic] = useState(true);
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
     (async () => {
@@ -25,7 +25,7 @@ export default function PostScreen({ navigation }) {
   const fetchSubscribedGroups = async () => {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
-      const response = await axios.get('https://server.golockedin.com/groups/subscribed', {
+      const response = await axios.get(`${apiUrl}/groups/subscribed`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -65,7 +65,7 @@ export default function PostScreen({ navigation }) {
           name: 'photo.jpg',
         });
 
-        const postResponse = await axios.post('https://server.golockedin.com/posts', formData, {
+        const postResponse = await axios.post(`${apiUrl}/posts`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`,

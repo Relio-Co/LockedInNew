@@ -13,13 +13,14 @@ export function GroupFeedScreen({ route, navigation }) {
   const [isSubscribed, setIsSubscribed] = useState(group.subscribed);
   const [posts, setPosts] = useState([]);
   const [members, setMembers] = useState([]);
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
     const fetchGroupDetails = async () => {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
         if (token) {
-          const response = await axios.get(`https://server.golockedin.com/groups/${group.group_id}`, {
+          const response = await axios.get(`${apiUrl}/groups/${group.group_id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           setPosts(response.data.posts);
@@ -39,7 +40,7 @@ export function GroupFeedScreen({ route, navigation }) {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
       if (token) {
-        const response = await axios.post(`https://server.golockedin.com/groups/join/${group.group_id}`, {}, {
+        const response = await axios.post(`${apiUrl}/groups/join/${group.group_id}`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setIsSubscribed(response.data.subscribed);
