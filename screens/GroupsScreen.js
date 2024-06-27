@@ -16,10 +16,11 @@ export default function GroupsScreen({ navigation }) {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
         if (token) {
-          const response = await axios.get('https://server.golockedin.com/groups/user-groups', {
+          const response = await axios.get('https://server.golockedin.com/groups', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setGroups(response.data);
+          const sortedGroups = response.data.sort((a, b) => b.subscribed - a.subscribed);
+          setGroups(sortedGroups);
         } else {
           console.error('No token found');
         }
@@ -35,13 +36,13 @@ export default function GroupsScreen({ navigation }) {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
       if (token) {
-        await axios.post(`https://server.golockedin.com/groups/join/${groupId}`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await axios.post(`https://server.golockedin.com/groups/join/${groupId}`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        // Update state to reflect the change
-        setGroups(groups.map(group =>
-          group.group_id === groupId ? { ...group, subscribed: !group.subscribed } : group
-        ));
+        const updatedGroups = groups.map(group =>
+          group.group_id === groupId ? { ...group, memberCount: response.data.memberCount, subscribed: response.data.subscribed } : group
+        );
+        setGroups(updatedGroups.sort((a, b) => b.subscribed - a.subscribed));
       } else {
         console.error('No token found');
       }
@@ -75,7 +76,7 @@ export default function GroupsScreen({ navigation }) {
               <Image source={{ uri: item.picture_url }} style={styles.avatar} />
               <View style={styles.groupInfo}>
                 <Text style={styles.groupText}>{item.name}</Text>
-                <Text style={styles.memberCount}>{item.members.length} members</Text>
+                <Text style={styles.memberCount}>{item.members ? item.members.length : 0} members</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity

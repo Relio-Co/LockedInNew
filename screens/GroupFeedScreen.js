@@ -1,16 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import FeedItem from '../components/FeedItem';
 import darkTheme from '../themes/DarkTheme';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const samplePosts = [
-  { id: '1', content: 'Group Post 1', likes: 15, comments: 3, imageUrl: 'https://picsum.photos/200/300', username: 'User1', groupName: 'Fitness Enthusiasts' },
-  { id: '2', content: 'Group Post 2', likes: 25, comments: 7, imageUrl: 'https://picsum.photos/200/300', username: 'User2', groupName: 'Healthy Eating' },
-];
+const { width } = Dimensions.get('window');
 
 export function GroupFeedScreen({ route, navigation }) {
   const { group } = route.params;
+  const [isSubscribed, setIsSubscribed] = useState(group.subscribed);
+  const [posts, setPosts] = useState([]);
+  const [members, setMembers] = useState([]);
+
+  useEffect(() => {
+    const fetchGroupDetails = async () => {
+      try {
+        const token = await AsyncStorage.getItem('jwt_token');
+        if (token) {
+          const response = await axios.get(`https://server.golockedin.com/groups/${group.group_id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setPosts(response.data.posts);
+          setMembers(response.data.members);
+        } else {
+          console.error('No token found');
+        }
+      } catch (error) {
+        console.error('Error fetching group details:', error);
+      }
+    };
+
+    fetchGroupDetails();
+  }, [group.group_id]);
+
+  const handleSubscribe = async () => {
+    try {
+      const token = await AsyncStorage.getItem('jwt_token');
+      if (token) {
+        const response = await axios.post(`https://server.golockedin.com/groups/join/${group.group_id}`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setIsSubscribed(response.data.subscribed);
+      } else {
+        console.error('No token found');
+      }
+    } catch (error) {
+      console.error('Error joining group:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -21,7 +60,7 @@ export function GroupFeedScreen({ route, navigation }) {
         <Text style={styles.groupTitle}>{group.name}</Text>
       </View>
       <FlatList
-        data={samplePosts}
+        data={posts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <FeedItem
@@ -36,9 +75,11 @@ export function GroupFeedScreen({ route, navigation }) {
         )}
         contentContainerStyle={styles.contentContainer}
       />
-      <TouchableOpacity style={styles.joinGroupButton} onPress={() => handleSubscribe(group.id)}>
-        <Text style={styles.joinGroupButtonText}>Join Group</Text>
-      </TouchableOpacity>
+      {!isSubscribed && (
+        <TouchableOpacity style={styles.joinGroupButton} onPress={handleSubscribe}>
+          <Text style={styles.joinGroupButtonText}>Join Group</Text>
+        </TouchableOpacity>
+      )}
       <View style={styles.dock}>
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Members', { group })}>
           <Ionicons name="people-outline" size={24} color={darkTheme.textColor} />
@@ -59,8 +100,6 @@ export function GroupFeedScreen({ route, navigation }) {
     </View>
   );
 }
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {

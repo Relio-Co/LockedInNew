@@ -1,75 +1,136 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView } from 'react-native';
+import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import darkTheme from '../themes/DarkTheme';
 
-const sampleUsers = [
-  { id: '1', name: 'Alice', username: 'alice123', profilePicture: 'https://picsum.photos/200' },
-  { id: '2', name: 'Bob', username: 'bob456', profilePicture: 'https://picsum.photos/200' },
-  // Add more sample users
-];
+// Create an axios instance
+const api = axios.create({
+  baseURL: 'https://server.golockedin.com',
+});
 
-const sampleFriendRequests = [
-  { id: '3', name: 'Charlie', username: 'charlie789', profilePicture: 'https://picsum.photos/200' },
-  { id: '4', name: 'Dana', username: 'dana101', profilePicture: 'https://picsum.photos/200' },
-  // Add more sample friend requests
-];
+// Add a request interceptor to include the JWT token
+api.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('jwt_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default function FriendsScreen() {
   const [friends, setFriends] = useState([]);
-  const [friendRequests, setFriendRequests] = useState(sampleFriendRequests);
+  const [friendRequests, setFriendRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate search results
-    const results = sampleUsers.filter(user => 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setSearchResults(results);
+    fetchFriendRequests();
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery.length > 2) {
+      searchUsers();
+    } else {
+      setSearchResults([]);
+    }
   }, [searchQuery]);
 
-  const addFriend = (user) => {
-    if (!friends.some(friend => friend.id === user.id)) {
-      setFriends([...friends, user]);
-      setSearchResults(searchResults.filter(result => result.id !== user.id));
+  const fetchFriendRequests = async () => {
+    try {
+      const response = await api.get('/friends/requests');
+      setFriendRequests(response.data);
+    } catch (error) {
+      setError(error.response ? error.response.data : error.message);
+      console.error('Error fetching friend requests:', error.response ? error.response.data : error.message);
     }
   };
 
-  const acceptFriendRequest = (friend) => {
-    setFriends([...friends, friend]);
-    setFriendRequests(friendRequests.filter(request => request.id !== friend.id));
+  const searchUsers = async () => {
+    try {
+      const response = await api.get(`/friends/search?query=${searchQuery}`);
+      setSearchResults(response.data);
+    } catch (error) {
+      setError(error.response ? error.response.data : error.message);
+      console.error('Error searching users:', error.response ? error.response.data : error.message);
+    }
   };
 
-  const rejectFriendRequest = (friend) => {
-    setFriendRequests(friendRequests.filter(request => request.id !== friend.id));
+  const sendFriendRequest = async (receiverUuid) => {
+    try {
+      const response = await fetch('https://server.golockedin.com/friends/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await AsyncStorage.getItem('jwt_token')}`,
+        },
+        body: JSON.stringify({ receiverUuid }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+      console.log('Friend request sent:', data);
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+    }
+  };
+  
+  
+  
+
+  const acceptFriendRequest = async (requestId) => {
+    try {
+      await api.post(`/friends/requests/${requestId}/accept`);
+      fetchFriendRequests();
+    } catch (error) {
+      setError(error.response ? error.response.data : error.message);
+      console.error('Error accepting friend request:', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const rejectFriendRequest = async (requestId) => {
+    try {
+      await api.post(`/friends/requests/${requestId}/reject`);
+      fetchFriendRequests();
+    } catch (error) {
+      setError(error.response ? error.response.data : error.message);
+      console.error('Error rejecting friend request:', error.response ? error.response.data : error.message);
+    }
   };
 
   const renderUserItem = ({ item }) => (
     <View style={styles.userItem}>
-      <Image source={{ uri: item.profilePicture }} style={styles.profilePicture} />
+      <Image source={{ uri: item.profile_picture }} style={styles.profilePicture} />
       <View style={styles.userInfo}>
         <Text style={styles.username}>{item.username}</Text>
         <Text style={styles.name}>{item.name}</Text>
       </View>
-      <TouchableOpacity style={styles.addButton} onPress={() => addFriend(item)}>
+      <TouchableOpacity style={styles.addButton} onPress={() => sendFriendRequest(item.uuid)}>
         <Text style={styles.addButtonText}>Add</Text>
       </TouchableOpacity>
     </View>
   );
+  
 
   const renderFriendRequestItem = ({ item }) => (
     <View style={styles.userItem}>
-      <Image source={{ uri: item.profilePicture }} style={styles.profilePicture} />
+      <Image source={{ uri: item.Sender.profile_picture }} style={styles.profilePicture} />
       <View style={styles.userInfo}>
-        <Text style={styles.username}>{item.username}</Text>
-        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.username}>{item.Sender.username}</Text>
+        <Text style={styles.name}>{item.Sender.name}</Text>
       </View>
       <View style={styles.buttonGroup}>
-        <TouchableOpacity style={styles.acceptButton} onPress={() => acceptFriendRequest(item)}>
+        <TouchableOpacity style={styles.acceptButton} onPress={() => acceptFriendRequest(item.request_id)}>
           <Text style={styles.buttonText}>Accept</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.rejectButton} onPress={() => rejectFriendRequest(item)}>
+        <TouchableOpacity style={styles.rejectButton} onPress={() => rejectFriendRequest(item.request_id)}>
           <Text style={styles.buttonText}>Reject</Text>
         </TouchableOpacity>
       </View>
@@ -85,28 +146,36 @@ export default function FriendsScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-      
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error: {JSON.stringify(error)}</Text>
+        </View>
+      )}
+
       {friendRequests.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Friend Requests</Text>
           <FlatList
             data={friendRequests}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.request_id.toString()}
             renderItem={renderFriendRequestItem}
             scrollEnabled={false}
           />
         </View>
       )}
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Search Results</Text>
-        <FlatList
-          data={searchResults}
-          keyExtractor={(item) => item.id}
-          renderItem={renderUserItem}
-          scrollEnabled={false}
-        />
-      </View>
+
+      {searchResults.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Search Results</Text>
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.user_id.toString()}
+            renderItem={renderUserItem}
+            scrollEnabled={false}
+          />
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -189,6 +258,17 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: darkTheme.buttonTextColor,
+    fontWeight: 'bold',
+  },
+  errorContainer: {
+    padding: 10,
+    backgroundColor: 'red',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: 'white',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

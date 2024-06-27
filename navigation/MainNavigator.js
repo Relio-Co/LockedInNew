@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FeedScreen from '../screens/FeedScreen';
 import GroupsScreen from '../screens/GroupsScreen';
 import FriendsScreen from '../screens/FriendsScreen';
-import ProfileTabNavigator from '../components/ProfileTabNavigator';
+import ProfileScreen from '../screens/ProfileScreen'; // Import the ProfileScreen
 import darkTheme from '../themes/DarkTheme';
 
 const Tab = createBottomTabNavigator();
@@ -24,7 +24,7 @@ function MainNavigator({ navigation }) {
               iconName = 'search';
             } else if (route.name === 'Groups') {
               iconName = 'people';
-            } else if (route.name === 'ProfileTab') {
+            } else if (route.name === 'Profile') {
               iconName = 'person';
             }
 
@@ -41,7 +41,7 @@ function MainNavigator({ navigation }) {
         <Tab.Screen name="Feed" options={{ headerShown: false }} component={FeedScreen} />
         <Tab.Screen name="Friends" options={{ headerShown: false }} component={FriendsScreen} />
         <Tab.Screen name="Groups" options={{ headerShown: false }} component={GroupsScreen} />
-        <Tab.Screen name="ProfileTab" options={{ headerShown: false }} component={ProfileTabNavigator} />
+        <Tab.Screen name="Profile" options={{ headerShown: false }} component={ProfileScreen} />
       </Tab.Navigator>
       <TouchableOpacity
         style={styles.postButton}

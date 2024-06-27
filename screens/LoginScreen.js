@@ -5,22 +5,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import darkTheme from '../themes/DarkTheme';
 
-export default function LoginScreen({ navigation }) {
+export function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  AsyncStorage.clear();
+
   useEffect(() => {
     checkExistingToken();
   }, []);
 
   const checkExistingToken = async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
+      const token = await AsyncStorage.getItem('jwt_token');
       if (token) {
         validateToken(token);
+        console.log(token);
       }
     } catch (error) {
       console.error('Error checking existing token:', error);
@@ -29,7 +31,7 @@ export default function LoginScreen({ navigation }) {
 
   const validateToken = async (token) => {
     try {
-      const response = await fetch('https://server.golockedin.com/user/validate-token', {
+      const response = await fetch(`https://server.golockedin.com/user/validate-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,11 +42,11 @@ export default function LoginScreen({ navigation }) {
       if (response.ok) {
         navigation.replace('Main');
       } else {
-        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.removeItem('jwt_token');
       }
     } catch (error) {
       console.error('Error validating token:', error);
-      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('jwt_token');
     }
   };
 
@@ -55,12 +57,28 @@ export default function LoginScreen({ navigation }) {
       let userCredential;
       if (isSignUp) {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const token = await userCredential.user.getIdToken();
+        await AsyncStorage.setItem('jwt_token', token);
+        const response = await fetch(`https://server.golockedin.com/user/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email, uid: userCredential.user.uid, username: email.split('@')[0] }), // Use email prefix as username
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error);
+        }
+        navigation.replace('Main');
       } else {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const token = await userCredential.user.getIdToken();
+        await AsyncStorage.setItem('jwt_token', token);
+        validateToken(token);
+        console.log(token);
       }
-      const token = await userCredential.user.getIdToken();
-      await AsyncStorage.setItem('userToken', token);
-      validateToken(token);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -85,6 +103,12 @@ export default function LoginScreen({ navigation }) {
               <Ionicons name="lock-closed-outline" size={24} color={darkTheme.textColor} style={styles.inputIcon} />
               <TextInput style={styles.input} placeholder="Password" placeholderTextColor={darkTheme.placeholderColor} value={password} secureTextEntry onChangeText={setPassword} />
             </View>
+            {isSignUp && (
+              <View style={styles.inputContainer}>
+                <Ionicons name="person-outline" size={24} color={darkTheme.textColor} style={styles.inputIcon} />
+                <TextInput style={styles.input} placeholder="Username" placeholderTextColor={darkTheme.placeholderColor} value={username} onChangeText={setUsername} />
+              </View>
+            )}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
             <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={loading}>
               {loading ? (
@@ -175,3 +199,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
+export default LoginScreen;

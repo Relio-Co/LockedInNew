@@ -1,5 +1,6 @@
+// NotificationsScreen.js
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import darkTheme from '../themes/DarkTheme';
 

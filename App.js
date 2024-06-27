@@ -9,6 +9,7 @@ import PostDetailScreen from './screens/PostDetailScreen';
 import GroupFeedScreen from './screens/GroupFeedScreen';
 import MembersScreen from './screens/MembersScreen';
 import ReportScreen from './screens/ReportScreen';
+import ProfileScreen from './screens/ProfileScreen'; // Import the ProfileScreen
 
 const Stack = createStackNavigator();
 
@@ -34,6 +35,7 @@ export default function App() {
         <Stack.Screen name="GroupFeed" component={GroupFeedScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Members" component={MembersScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Report" component={ReportScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
