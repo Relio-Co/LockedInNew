@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import darkTheme from '../themes/DarkTheme';
+import { Image } from 'expo-image'
 
 const deviceWidth = Dimensions.get('window').width;
 

@@ -1,26 +1,40 @@
+// In PostScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, TouchableOpacity, Image, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
+import { View, Text, StyleSheet, Button, TouchableOpacity, Image, TextInput, Picker, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import darkTheme from '../themes/DarkTheme';
 
-const sampleGroups = [
-  { id: '1', name: 'Fitness Enthusiasts' },
-  { id: '2', name: 'Healthy Eating' },
-  // Add more sample groups
-];
-
-export default function PostScreen() {
-  const [selectedGroup, setSelectedGroup] = useState(sampleGroups[0].id);
+export default function PostScreen({ navigation }) {
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [caption, setCaption] = useState('');
   const [hasPermission, setHasPermission] = useState(null);
+  const [groups, setGroups] = useState([]);
+  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
     (async () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
+    fetchSubscribedGroups();
   }, []);
+
+  const fetchSubscribedGroups = async () => {
+    try {
+      const token = await AsyncStorage.getItem('jwt_token');
+      const response = await axios.get('https://server.golockedin.com/groups/subscribed', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setGroups(response.data);
+    } catch (error) {
+      console.error('Error fetching subscribed groups:', error);
+    }
+  };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchCameraAsync({
@@ -31,26 +45,49 @@ export default function PostScreen() {
     });
 
     if (!result.cancelled) {
-      setPhoto(result.assets[0].uri);
-    } else {
-      setPhoto(null);
+      setPhoto(result.uri);
     }
   };
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (photo && caption) {
-      console.log(`Posting to ${selectedGroup} with photo: ${photo} and caption: ${caption}`);
-      // Add your post submission logic here
+      try {
+        const token = await AsyncStorage.getItem('jwt_token');
+        const formData = new FormData();
+        formData.append('caption', caption);
+        formData.append('isPublic', isPublic);
+        if (!isPublic && selectedGroup) {
+          formData.append('groupId', selectedGroup);
+        }
+        formData.append('image', {
+          uri: photo,
+          type: 'image/jpeg',
+          name: 'photo.jpg',
+        });
+
+        const postResponse = await axios.post('https://server.golockedin.com/posts', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (postResponse.status === 201) {
+          alert('Post submitted successfully!');
+          setPhoto(null);
+          setCaption('');
+          navigation.goBack();
+        } else {
+          alert('Failed to submit post');
+        }
+      } catch (error) {
+        console.error('Error posting:', error);
+        alert(`Error posting. Please try again. ${error.message}`);
+      }
     } else {
       alert('Please take a photo and write a caption');
     }
   };
-
-  useEffect(() => {
-    if (hasPermission) {
-      pickImage();
-    }
-  }, [hasPermission]);
 
   if (hasPermission === null) {
     return <View />;
@@ -60,10 +97,7 @@ export default function PostScreen() {
   }
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.inner}>
           {photo ? (
@@ -76,19 +110,23 @@ export default function PostScreen() {
                 value={caption}
                 onChangeText={setCaption}
               />
-              <View style={styles.groupSelector}>
-                {sampleGroups.map(group => (
-                  <TouchableOpacity
-                    key={group.id}
-                    style={styles.groupButton}
-                    onPress={() => setSelectedGroup(group.id)}
-                  >
-                    <Text style={[styles.groupText, selectedGroup === group.id && styles.selectedGroupText]}>
-                      {group.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.toggleContainer}>
+                <Text style={styles.toggleText}>Post Publicly</Text>
+                <Switch
+                  value={isPublic}
+                  onValueChange={(value) => setIsPublic(value)}
+                />
               </View>
+              {!isPublic && (
+                <Picker
+                  selectedValue={selectedGroup}
+                  onValueChange={(itemValue) => setSelectedGroup(itemValue)}
+                >
+                  {groups.map((group) => (
+                    <Picker.Item key={group.group_id} label={group.name} value={group.group_id} />
+                  ))}
+                </Picker>
+              )}
               <Button title="Post" onPress={handlePost} color={darkTheme.accentColor} />
               <Button title="Retake Photo" onPress={pickImage} color={darkTheme.accentColor} />
             </>
@@ -126,21 +164,13 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 16,
   },
-  groupSelector: {
+  toggleContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  groupButton: {
-    backgroundColor: darkTheme.cardColor,
-    padding: 8,
-    borderRadius: 8,
-    marginHorizontal: 4,
-  },
-  groupText: {
+  toggleText: {
     color: darkTheme.textColor,
-  },
-  selectedGroupText: {
-    color: darkTheme.accentColor,
+    marginRight: 8,
   },
 });

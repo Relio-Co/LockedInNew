@@ -61,16 +61,16 @@ export function GroupFeedScreen({ route, navigation }) {
       </View>
       <FlatList
         data={posts}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.post_id.toString()}
         renderItem={({ item }) => (
           <FeedItem
-            content={item.content}
+            content={item.caption}
             likes={item.likes}
             comments={item.comments}
-            imageUrl={item.imageUrl}
+            imageUrl={item.image_url}
             onPress={() => navigation.navigate('PostDetail', { post: item })}
-            username={item.username}
-            groupName={item.groupName}
+            username={item.created_by_username}
+            groupName={group.name}
           />
         )}
         contentContainerStyle={styles.contentContainer}
@@ -90,7 +90,7 @@ export function GroupFeedScreen({ route, navigation }) {
         <TouchableOpacity style={styles.button} onPress={() => {/* navigate to chat screen */}}>
           <Ionicons name="chatbubble-outline" size={24} color={darkTheme.textColor} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Post')}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Post', { group })}>
           <Ionicons name="create-outline" size={24} color={darkTheme.textColor} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Report', { data: group })}>
