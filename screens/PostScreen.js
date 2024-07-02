@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, TouchableOpacity, Image, TextInput, Picker, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform, Switch } from 'react-native';
+import { View, Text, StyleSheet, Button, Image, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform, Switch } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import darkTheme from '../themes/DarkTheme';
+import { Picker } from '@react-native-picker/picker';
 
 export default function PostScreen({ navigation }) {
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -18,6 +19,9 @@ export default function PostScreen({ navigation }) {
     (async () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
+      if (status === 'granted') {
+        pickImage();
+      }
     })();
     fetchSubscribedGroups();
   }, []);
@@ -25,12 +29,17 @@ export default function PostScreen({ navigation }) {
   const fetchSubscribedGroups = async () => {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
+      if (!token) {
+        console.error('JWT token not found');
+        return;
+      }
       const response = await axios.get(`${apiUrl}/groups/subscribed`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setGroups(response.data);
+      console.log('Subscribed Groups:', response.data);
     } catch (error) {
       console.error('Error fetching subscribed groups:', error);
     }
@@ -45,7 +54,7 @@ export default function PostScreen({ navigation }) {
     });
 
     if (!result.cancelled) {
-      setPhoto(result.uri);
+      setPhoto(result.assets[0].uri);
     }
   };
 
@@ -82,7 +91,7 @@ export default function PostScreen({ navigation }) {
         }
       } catch (error) {
         console.error('Error posting:', error);
-        alert(`Error posting. Please try again. ${error.message}`);
+        alert(`Error posting. Please try again. ${error.response?.data?.error || error.message}`);
       }
     } else {
       alert('Please take a photo and write a caption');
@@ -121,7 +130,9 @@ export default function PostScreen({ navigation }) {
                 <Picker
                   selectedValue={selectedGroup}
                   onValueChange={(itemValue) => setSelectedGroup(itemValue)}
+                  style={styles.picker}
                 >
+                  <Picker.Item label="Select a group..." value={null} />
                   {groups.map((group) => (
                     <Picker.Item key={group.group_id} label={group.name} value={group.group_id} />
                   ))}
@@ -172,5 +183,11 @@ const styles = StyleSheet.create({
   toggleText: {
     color: darkTheme.textColor,
     marginRight: 8,
+  },
+  picker: {
+    width: '100%',
+    backgroundColor: darkTheme.inputBackgroundColor,
+    color: darkTheme.textColor,
+    marginBottom: 16,
   },
 });

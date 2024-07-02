@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, TextInput, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, TextInput, Switch, Alert, Button } from 'react-native';
 import axios from 'axios';
 import darkTheme from '../themes/DarkTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -17,78 +18,79 @@ const ProfileScreen = ({ navigation }) => {
   const [privateAccount, setPrivateAccount] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
+  const [profilePicture, setProfilePicture] = useState('');
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
-        const response = await axios.get(`${apiUrl}/user`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const user = response.data[0];
-        setUserData(user);
-        setUsername(user.username);
-        setName(user.name);
-        setPrivateAccount(user.private_account);
-        setEmailNotifications(user.email_notifications);
-        setPushNotifications(user.push_notifications);
+        if (token) {
+          const response = await axios.get(`${apiUrl}/user`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const user = response.data;
+          setUserData(user);
+          setUsername(user.username);
+          setName(user.name);
+          setPrivateAccount(user.private_account);
+          setEmailNotifications(user.email_notifications);
+          setPushNotifications(user.push_notifications);
+          setProfilePicture(user.profile_picture);
+        } else {
+          // Handle the case where token is not available
+          navigation.replace('Login');
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
-
-    const fetchUserPosts = async () => {
-      try {
-        const token = await AsyncStorage.getItem('jwt_token');
-        const response = await axios.get(`${apiUrl}/user/posts`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPosts(response.data);
-      } catch (error) {
-        console.error('Error fetching user posts:', error);
-      }
-    };
-
-    const fetchNotifications = async () => {
-      try {
-        const token = await AsyncStorage.getItem('jwt_token');
-        const response = await axios.get(`${apiUrl}/user/notifications`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setNotifications(response.data);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      }
-    };
-
+  
     fetchUserData();
-    fetchUserPosts();
-    fetchNotifications();
-  }, [apiUrl]);
+  }, [apiUrl, navigation]);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.cancelled) {
+      setProfilePicture(result.assets[0].uri);
+    }
+  };
 
   const saveUserSettings = async () => {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
-      await axios.put(
-        `${apiUrl}/user/settings`,
-        {
-          username,
-          name,
-          private_account: privateAccount,
-          email_notifications: emailNotifications,
-          push_notifications: pushNotifications,
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('name', name);
+      formData.append('private_account', privateAccount);
+      formData.append('email_notifications', emailNotifications);
+      formData.append('push_notifications', pushNotifications);
+      if (profilePicture) {
+        formData.append('profile_picture', {
+          uri: profilePicture,
+          type: 'image/jpeg',
+          name: 'profile_picture.jpg',
+        });
+      }
+      await axios.put(`${apiUrl}/user/settings`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      });
       setIsEditingUsername(false);
       setIsEditingName(false);
     } catch (error) {
       console.error('Error updating user settings:', error);
     }
   };
+  
 
   const logout = async () => {
     await AsyncStorage.removeItem('jwt_token');
@@ -119,6 +121,7 @@ const ProfileScreen = ({ navigation }) => {
       console.error('Error deleting account:', error);
     }
   };
+  
 
   const renderPostItem = ({ item }) => (
     <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
@@ -144,7 +147,10 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image source={{ uri: userData.profile_picture || 'https://via.placeholder.com/100' }} style={styles.profilePicture} />
+        <TouchableOpacity onPress={pickImage}>
+          <Image source={{ uri: profilePicture || 'https://via.placeholder.com/100' }} style={styles.profilePicture} />
+          <Icon name="edit" size={20} color={darkTheme.textColor} style={styles.editIcon} />
+        </TouchableOpacity>
         <View style={styles.editableField}>
           {isEditingUsername ? (
             <TextInput
@@ -226,13 +232,7 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         )}
         rightOpenValue={-75}
-      />
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderPostItem}
-        numColumns={3}
-        style={styles.postsContainer}
+        disableRightSwipe
       />
     </View>
   );
@@ -242,13 +242,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: darkTheme.backgroundColor,
-    paddingTop: 50,
+    padding: 16,
   },
   header: {
-    padding: 16,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: darkTheme.borderColor,
+    marginBottom: 24,
   },
   profilePicture: {
     width: 100,
@@ -256,117 +254,107 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginBottom: 8,
   },
+  editIcon: {
+    position: 'absolute',
+    right: 8,
+    bottom: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 10,
+    padding: 4,
+  },
   editableField: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  input: {
-    color: darkTheme.textColor,
-    fontSize: 18,
+  username: {
+    fontSize: 20,
     fontWeight: 'bold',
-    borderBottomWidth: 1,
-    borderBottomColor: darkTheme.accentColor,
-    marginBottom: 8,
+    color: darkTheme.textColor,
     marginRight: 8,
   },
-  username: {
-    color: darkTheme.textColor,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   name: {
+    fontSize: 18,
     color: darkTheme.textColor,
-    fontSize: 16,
+    marginRight: 8,
   },
   score: {
+    fontSize: 16,
     color: darkTheme.textColor,
-    fontSize: 14,
   },
   joinDate: {
-    color: darkTheme.textColor,
     fontSize: 14,
+    color: darkTheme.textColor,
   },
   settingsContainer: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: darkTheme.borderColor,
+    marginBottom: 24,
   },
   settingsField: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 8,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: darkTheme.dividerColor,
   },
   settingsLabel: {
-    color: darkTheme.textColor,
     fontSize: 16,
+    color: darkTheme.textColor,
   },
   saveButton: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: darkTheme.accentColor,
-    borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: darkTheme.primaryColor,
+    borderRadius: 4,
   },
   saveButtonText: {
-    color: darkTheme.buttonTextColor,
-    fontSize: 16,
+    color: darkTheme.textColor,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   logoutButton: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: darkTheme.buttonColor,
-    borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: darkTheme.secondaryColor,
+    borderRadius: 4,
   },
   logoutButtonText: {
-    color: darkTheme.buttonTextColor,
-    fontSize: 16,
+    color: darkTheme.textColor,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   deleteButton: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: darkTheme.errorColor,
-    borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: 'red',
+    borderRadius: 4,
   },
   deleteButtonText: {
-    color: darkTheme.buttonTextColor,
-    fontSize: 16,
-  },
-  postsContainer: {
-    padding: 16,
+    color: darkTheme.textColor,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   postImage: {
-    width: '30%',
-    aspectRatio: 1,
-    margin: '1.5%',
+    width: '100%',
+    height: 200,
+    marginBottom: 16,
+    borderRadius: 8,
   },
   notificationContainer: {
-    backgroundColor: darkTheme.cardColor,
-    padding: 20,
+    padding: 16,
+    backgroundColor: darkTheme.cardBackgroundColor,
     borderBottomWidth: 1,
-    borderBottomColor: darkTheme.borderColor,
+    borderBottomColor: darkTheme.dividerColor,
   },
   notificationText: {
     color: darkTheme.textColor,
   },
   rowBack: {
     alignItems: 'center',
-    backgroundColor: darkTheme.errorColor,
+    backgroundColor: 'red',
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingRight: 15,
-  },
-  deleteButton: {
-    width: 75,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    color: darkTheme.textColor,
   },
 });
 
