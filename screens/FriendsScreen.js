@@ -4,15 +4,12 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import darkTheme from '../themes/DarkTheme';
 
-// Get the API URL from environment variables
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
-// Create an axios instance
 const api = axios.create({
   baseURL: apiUrl,
 });
 
-// Add a request interceptor to include the JWT token
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('jwt_token');
@@ -26,7 +23,7 @@ api.interceptors.request.use(
   }
 );
 
-export default function FriendsScreen() {
+export default function FriendsScreen({ navigation }) {
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,6 +31,7 @@ export default function FriendsScreen() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    fetchFriends();
     fetchFriendRequests();
   }, []);
 
@@ -44,6 +42,16 @@ export default function FriendsScreen() {
       setSearchResults([]);
     }
   }, [searchQuery]);
+
+  const fetchFriends = async () => {
+    try {
+      const response = await api.get('/friends');
+      setFriends(response.data);
+    } catch (error) {
+      setError(error.response ? error.response.data : error.message);
+      console.error('Error fetching friends:', error.response ? error.response.data : error.message);
+    }
+  };
 
   const fetchFriendRequests = async () => {
     try {
@@ -67,21 +75,10 @@ export default function FriendsScreen() {
 
   const sendFriendRequest = async (receiverUuid) => {
     try {
-      const response = await fetch(`${apiUrl}/friends/request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await AsyncStorage.getItem('jwt_token')}`,
-        },
-        body: JSON.stringify({ receiverUuid }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error);
-      }
-      console.log('Friend request sent:', data);
+      const response = await api.post('/friends/request', { receiverUuid });
+      console.log('Friend request sent:', response.data);
     } catch (error) {
-      console.error('Error sending friend request:', error);
+      console.error('Error sending friend request:', error.response ? error.response.data : error.message);
     }
   };
 
@@ -89,6 +86,7 @@ export default function FriendsScreen() {
     try {
       await api.post(`/friends/requests/${requestId}/accept`);
       fetchFriendRequests();
+      fetchFriends();
     } catch (error) {
       setError(error.response ? error.response.data : error.message);
       console.error('Error accepting friend request:', error.response ? error.response.data : error.message);
@@ -102,6 +100,16 @@ export default function FriendsScreen() {
     } catch (error) {
       setError(error.response ? error.response.data : error.message);
       console.error('Error rejecting friend request:', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const removeFriend = async (friendId) => {
+    try {
+      await api.delete(`/friends/${friendId}`);
+      fetchFriends();
+    } catch (error) {
+      setError(error.response ? error.response.data : error.message);
+      console.error('Error removing friend:', error.response ? error.response.data : error.message);
     }
   };
 
@@ -136,6 +144,21 @@ export default function FriendsScreen() {
     </View>
   );
 
+  const renderFriendItem = ({ item }) => (
+    <View style={styles.userItem}>
+      <Image source={{ uri: item.profile_picture }} style={styles.profilePicture} />
+      <View style={styles.userInfo}>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile', { userId: item.user_id })}>
+          <Text style={styles.username}>{item.username}</Text>
+        </TouchableOpacity>
+        <Text style={styles.name}>{item.name}</Text>
+      </View>
+      <TouchableOpacity style={styles.removeButton} onPress={() => removeFriend(item.user_id)}>
+        <Text style={styles.removeButtonText}>Remove</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <ScrollView style={styles.container}>
       <TextInput
@@ -159,6 +182,18 @@ export default function FriendsScreen() {
             data={friendRequests}
             keyExtractor={(item) => item.request_id.toString()}
             renderItem={renderFriendRequestItem}
+            scrollEnabled={false}
+          />
+        </View>
+      )}
+
+      {friends.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Friends</Text>
+          <FlatList
+            data={friends}
+            keyExtractor={(item) => item.user_id.toString()}
+            renderItem={renderFriendItem}
             scrollEnabled={false}
           />
         </View>
@@ -226,18 +261,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   name: {
-    color: darkTheme.placeholderColor,
+    color: darkTheme.mutedTextColor,
     fontSize: 14,
   },
   addButton: {
-    backgroundColor: darkTheme.accentColor,
+    backgroundColor: darkTheme.buttonColor,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 4,
+    borderRadius: 20,
   },
   addButtonText: {
     color: darkTheme.buttonTextColor,
-    fontWeight: 'bold',
+    fontSize: 14,
   },
   buttonGroup: {
     flexDirection: 'row',
@@ -246,28 +281,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'green',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 4,
+    borderRadius: 20,
     marginRight: 8,
   },
   rejectButton: {
     backgroundColor: 'red',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 4,
+    borderRadius: 20,
   },
   buttonText: {
-    color: darkTheme.buttonTextColor,
-    fontWeight: 'bold',
-  },
-  errorContainer: {
-    padding: 10,
-    backgroundColor: 'red',
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  removeButton: {
+    backgroundColor: 'red',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  removeButtonText: {
+    color: 'white',
+    fontSize: 14,
   },
 });
